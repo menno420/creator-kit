@@ -1,0 +1,133 @@
+# substrate-kit branch sweep (LIVE — installed by
+# `bootstrap.py adopt --wire-enforcement`).
+# KIT-OWNED: adopt/upgrade regenerates this file in place, so
+# upstream sweep fixes land here on every `bootstrap.py upgrade` —
+# hand edits are OVERWRITTEN. Put host-specific customizations in a
+# SEPARATE workflow file, never in this one.
+#
+# WHY THIS EXISTS (inbox ORDER 023): GitHub's "Automatically
+# delete head branches" silently skips merges performed by app/bot
+# actors (github.com/orgs/community/discussions/63409 ·
+# cli/cli#9073) — which is every fleet auto-merge (armed via
+# GITHUB_TOKEN / MCP app tokens) — so spent agent branches
+# accumulate by the hundreds (fleet census 2026-07-14: 460/491
+# surviving claude/* heads across four repos sat at exactly their
+# merged PR's head SHA).
+#
+# WHY A SCHEDULE, NOT `pull_request: closed`: events performed with
+# GITHUB_TOKEN do not trigger workflows (the docs' "Automatic
+# token authentication" recursion guard), so a closed-event
+# cleanup would never fire for exactly the merges that need it.
+#
+# WHY A WORKFLOW, NOT THE AGENT: spent branches accumulate whether
+# or not any session is running, and a sweep needs no agent
+# present. (The capability ledger's OA-10 entry once recorded
+# agent-side deletion as 403-walled; RETRACTED 2026-08-11 —
+# deletion works over the direct-credential path. The schedule
+# stands on the two rationales above, not on that wall.) This
+# workflow, running with the repo's own GITHUB_TOKEN, is the
+# sanctioned path for unattended cleanup.
+#
+# WHAT IT DELETES — a ref must pass EVERY rule, in order:
+#   1. matches a sweep pattern (claude/* · codex/* · bot/*);
+#   2. is the head of a MERGED or CLOSED same-repo PR (fork heads
+#      are excluded by construction: a closed fork PR must never
+#      delete a same-named local branch);
+#   3. its tip SHA equals that spent PR head's SHA (a ref that
+#      moved on after its PR closed may carry unmerged work —
+#      skipped, logged);
+#   4. is NOT the head of any OPEN pull request;
+#   5. is NOT the repository's default branch.
+# Every deletion and every skip is logged with its reason. Manual
+# runs (workflow_dispatch) take a `dry_run` input: log what WOULD
+# be deleted, delete nothing.
+name: branch-sweep
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Log what WOULD be deleted; delete nothing.'
+        type: boolean
+        default: false
+# Least-privilege: ref deletion needs `contents: write`; PR
+# enumeration needs `pull-requests: read`. Nothing else.
+permissions:
+  contents: write
+  pull-requests: read
+concurrency:
+  group: branch-sweep
+  cancel-in-progress: false
+jobs:
+  branch-sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sweep spent agent branches (heads of merged/closed PRs)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run == true && 'true' || 'false' }}
+        run: |
+          set -euo pipefail
+          default_branch="$(gh api "repos/$GITHUB_REPOSITORY" --jq .default_branch)"
+          echo "default branch: $default_branch (never touched)"
+          echo "dry run: $DRY_RUN"
+          # Existing refs (+ tip SHAs) under each swept pattern's
+          # prefix, via the matching-refs API.
+          : > existing-raw.txt
+          for query in 'claude/' 'codex/' 'bot/'; do
+            gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/$query" \
+              --paginate --jq '.[] | .ref + " " + .object.sha' >> existing-raw.txt
+          done
+          sed 's|^refs/heads/||' existing-raw.txt | sort -u > existing.txt
+          # Heads of OPEN PRs — never swept, whatever their PR
+          # history (a reused branch with a fresh PR stays).
+          gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" \
+            --paginate --jq '.[].head.ref' | sort -u > open-heads.txt
+          # Same-repo heads (+ head SHAs) of MERGED and CLOSED PRs
+          # (state=closed covers both; the repo filter drops fork
+          # heads).
+          gh api "repos/$GITHUB_REPOSITORY/pulls?state=closed&per_page=100" \
+            --paginate \
+            --jq '.[] | select(.head.repo != null) | .head.repo.full_name + " " + .head.ref + " " + .head.sha' \
+            > spent-raw.txt
+          awk -v repo="$GITHUB_REPOSITORY" '$1 == repo { print $2 " " $3 }' \
+            spent-raw.txt | sort -u > spent-pairs.txt
+          cut -d' ' -f1 spent-pairs.txt | sort -u > spent-refs.txt
+          # The plan: every existing pattern-matched ref that fails
+          # a skip rule is logged with the reason; survivors are
+          # deleted (or dry-run-logged) below.
+          : > sweep-plan.txt
+          while read -r ref sha; do
+            case "$ref" in
+              claude/*|codex/*|bot/*) ;;
+              *) echo "skip: $ref — matched a query prefix but no sweep pattern"; continue ;;
+            esac
+            if [ "$ref" = "$default_branch" ]; then
+              echo "skip: $ref — the default branch is never touched"
+              continue
+            fi
+            if grep -qxF "$ref" open-heads.txt; then
+              echo "skip: $ref — head of an OPEN pull request"
+              continue
+            fi
+            if ! grep -qxF "$ref" spent-refs.txt; then
+              echo "skip: $ref — no merged/closed PR has this head (live branch)"
+              continue
+            fi
+            if ! grep -qxF "$ref $sha" spent-pairs.txt; then
+              echo "skip: $ref — moved on since its PR closed (tip is not a spent PR head)"
+              continue
+            fi
+            printf '%s\n' "$ref" >> sweep-plan.txt
+          done < existing.txt
+          echo "sweep plan: $(wc -l < sweep-plan.txt) of $(wc -l < existing.txt) candidate ref(s)"
+          while IFS= read -r ref; do
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "DRY-RUN: would delete $ref"
+            elif gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$ref"; then
+              echo "deleted: $ref"
+            else
+              echo "::warning::could not delete $ref (already gone, protected, or a permissions gap)"
+            fi
+          done < sweep-plan.txt

@@ -1,0 +1,105 @@
+{
+  "automerge": {
+    "branch_patterns": [
+      "claude/*",
+      "claim/*"
+    ],
+    "required_context": "substrate-gate"
+  },
+  "badge_tokens": [
+    "binding",
+    "living-ledger",
+    "reference",
+    "plan",
+    "historical",
+    "audit",
+    "owner-guidance",
+    "ideas",
+    "archive"
+  ],
+  "branch_sweep": {
+    "branch_patterns": [
+      "claude/*",
+      "codex/*",
+      "bot/*"
+    ],
+    "cron": "17 3 * * *"
+  },
+  "cadence": {
+    "compaction_sessions": 20,
+    "critical_slot_grace_sessions": 3,
+    "guided_practice_sessions": 3,
+    "reconciliation_prs": 30,
+    "reconciliation_sessions": 20,
+    "staleness_days": 14
+  },
+  "claims_dir": "control/claims",
+  "docs_root": "docs",
+  "economy": {
+    "classes": [],
+    "debt_threshold": 10,
+    "gauges": [],
+    "id_patterns": [
+      "Q-\\d{3,}",
+      "D-\\d{3,}",
+      "R-\\d{3,}"
+    ],
+    "maturity": "shadow",
+    "pass_records_dir": "planning",
+    "reference_roots": []
+  },
+  "heartbeat_files": [
+    "control/status.md"
+  ],
+  "interpreter": "C:\\Users\\menno\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "interpreter_for_checks": null,
+  "kit_version": "1.21.0",
+  "namespace": {
+    "reserved": {},
+    "roots": []
+  },
+  "native_gate": {},
+  "orientation": {
+    "boot_docs": [],
+    "budget_words": 7000,
+    "headroom_warn_ratio": 0.95
+  },
+  "paths": {},
+  "preflight_scripts": [
+    "scripts/preflight.py"
+  ],
+  "project_id": "c5aeda98a8ca",
+  "readpath_docs": [
+    "AGENT_ORIENTATION.md",
+    "current-state.md"
+  ],
+  "reflection": {
+    "buffer_size": 5,
+    "enabled": true
+  },
+  "review_seam": {
+    "reviewer": null
+  },
+  "scopes": {},
+  "seams": [],
+  "session_markers": [
+    {
+      "label": "Status badge",
+      "needle": "**Status:**"
+    },
+    {
+      "label": "Session idea",
+      "needle": "\ud83d\udca1"
+    },
+    {
+      "label": "Previous-session review",
+      "needle": "previous-session review"
+    },
+    {
+      "label": "Model line",
+      "needle": "\ud83d\udcca Model:"
+    }
+  ],
+  "sessions_dir": ".sessions",
+  "state_dir": ".substrate"
+}

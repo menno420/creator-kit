@@ -1,0 +1,279 @@
+# substrate-kit enforcement gate (LIVE — installed by `bootstrap.py adopt --wire-enforcement`).
+# KIT-OWNED: adopt/upgrade regenerates this file in place, so
+# upstream gate fixes land here on every `bootstrap.py upgrade` —
+# hand edits are OVERWRITTEN. Put host-specific customizations
+# (e.g. a label carve-out for PRs that legitimately need no session
+# card) in a SEPARATE workflow file, never in this one.
+# Holds the merge red until the session journal is written and every
+# hygiene check passes. If this check is REQUIRED, prefer an
+# in-job short-circuit (like the control lane below) over
+# `paths-ignore`: a required context that never reports stays
+# pending and blocks auto-merge forever.
+name: substrate-gate
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  substrate-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: control fast lane (control/**-only diff short-circuits green)
+        # Heartbeat/inbox commits are coordination, not code: they
+        # skip the heavy gate but the job still REPORTS green so a
+        # required context never jams auto-merge. Empty/unreadable
+        # diffs fail safe onto the full suite.
+        id: lane
+        run: |
+          if [ -n "${{ github.base_ref }}" ]; then
+            range="origin/${{ github.base_ref }}...HEAD"
+          else
+            range="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          files="$(git diff --name-only "$range" 2>/dev/null || true)"
+          control_only=false
+          if [ -n "$files" ] && [ -z "$(printf '%s\n' "$files" | grep -v '^control/')" ]; then
+            control_only=true
+          fi
+          echo "control_only=$control_only" >> "$GITHUB_OUTPUT"
+          echo "control-only diff: $control_only"
+      - name: control-status gate (fast lane — a control diff must still prove its heartbeat)
+        if: steps.lane.outputs.control_only == 'true'
+        # The lane skips the heavy gate, but a control-only PR edits
+        # exactly the files the status checker validates — without
+        # this step a heartbeat-deleting control PR merges GREEN and
+        # pre-reddens the NEXT unrelated PR (kit fleet review
+        # 2026-07-09). Scoped + stdlib-only on the system python3
+        # (no setup-python): the lane stays fast, and heartbeat PRs
+        # still need no session card.
+        run: python3 bootstrap.py check --strict --status-only
+      - name: inbox append-only gate (control/inbox.md pure-append + ORDER grammar)
+        # control/inbox.md is one-writer/append-only by protocol
+        # (control/README.md): without this step a green control-only
+        # PR could rewrite or erase orders. Holds the PR red unless
+        # the inbox diff is PURE-APPEND vs the merge-base and the
+        # appended text is well-formed ORDER blocks. Runs on BOTH
+        # lanes (no lane condition): an inbox append rides the fast
+        # lane, but a mixed PR could smuggle an inbox edit through
+        # the full lane too. Stdlib-only system python3; git extracts
+        # the base blob here in bash because the engine never shells
+        # out. Self-skips when control/inbox.md is untouched.
+        run: |
+          if [ -n "${{ github.base_ref }}" ]; then
+            base="$(git merge-base "origin/${{ github.base_ref }}" HEAD)"
+            range="origin/${{ github.base_ref }}...HEAD"
+          else
+            base="${{ github.event.before }}"
+            range="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          changed="$(git diff --name-only "$range" 2>/dev/null | grep -Fx 'control/inbox.md' || true)"
+          if [ -z "$changed" ]; then
+            echo "control/inbox.md not in diff — inbox append-only gate skipped."
+          else
+            basefile="$(mktemp)"
+            git show "$base:control/inbox.md" > "$basefile" 2>/dev/null || : > "$basefile"
+            python3 bootstrap.py check --strict --status-only --inbox-base "$basefile"
+          fi
+      - name: claims-only fast-lane guard (claude/* work PRs must carry a session card)
+        if: steps.lane.outputs.control_only == 'true'
+        # The #451 fast-lane race: a `claude/*` WORK PR whose ENTIRE
+        # diff is only `control/claims/**` rides the control fast
+        # lane, skips the born-red session gate, and auto-merges
+        # card-less — a claim-file commit masquerading as finished
+        # work. This gate holds such a PR RED. It runs ONLY on the
+        # fast lane and ONLY for `claude/*` heads: a `claim/*`
+        # standalone-claim PR is MEANT to ride the lane card-less
+        # (control/claims/README.md), so a non-`claude/*` head exits
+        # 0 immediately. The changed files come from git in bash —
+        # the same merge-base idiom as the inbox append-only gate
+        # above (the engine never shells out into git, §3.2). A
+        # `claude/*` PR that carries any path outside control/claims/
+        # (its real work + its session card) is on the FULL lane, so
+        # it never reaches this step — by construction this fires
+        # only on the pure-claim `claude/*` diff it exists to reject.
+        #
+        # The `env:` indirection is load-bearing (fm #833, Codex P1):
+        # a branch name is chosen by the PR AUTHOR and git accepts
+        # names containing shell metacharacters, so interpolating
+        # `${{ github.head_ref }}` straight into the script lets a
+        # head like `claude/";exit${IFS}0;#` close the assignment
+        # and run an early successful exit — making this very guard
+        # pass and re-opening the #451 hole it exists to close.
+        # GitHub expands `${{ }}` BEFORE bash parses the script, so
+        # quoting inside the script cannot help; the value must
+        # arrive as an environment variable, which bash never
+        # re-parses.
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          head_ref="$HEAD_REF"
+          case "$head_ref" in
+            claude/*) ;;
+            *) echo "guard N/A — head '$head_ref' is not a claude/* branch (claim/* and others ride the fast lane card-less by design)."; exit 0 ;;
+          esac
+          if [ -n "$BASE_REF" ]; then
+            range="origin/$BASE_REF...HEAD"
+          else
+            range="$EVENT_BEFORE..$EVENT_SHA"
+          fi
+          changed="$(git diff --name-only "$range" 2>/dev/null || true)"
+          if [ -z "$changed" ]; then
+            echo "no changed files resolved — nothing to guard."; exit 0
+          fi
+          non_claims="$(printf '%s\n' "$changed" | grep -v '^control/claims/' || true)"
+          if [ -z "$non_claims" ]; then
+            echo "::error::A claude/* work PR whose ENTIRE diff is only control/claims/** rode the control fast lane and would auto-merge card-less (the #451 race). A claude/* PR must carry real work plus its .sessions/ session card — which puts it on the full lane. If this is a standalone claim, land it on a claim/* branch (control/claims/README.md)."
+            printf 'claims-only claude/* diff:\n%s\n' "$changed"
+            exit 1
+          fi
+          echo "claude/* PR carries non-claim paths — not a claims-only diff; guard passes."
+      - uses: actions/setup-python@v6
+        if: steps.lane.outputs.control_only != 'true'
+        with:
+          python-version: "3.x"
+      - name: repo checkers (host-owned scripts/repo_checks.sh; self-skips when absent)
+        if: steps.lane.outputs.control_only != 'true'
+        # Host-owned checkers used to be hand-added into THIS file and
+        # silently dropped at every regen: the v1.20.1→v1.20.2 upgrade
+        # dropped the step running fleet-manager's two repo checkers,
+        # leaving the gate green while running neither (fm #833). This
+        # planted extension point ends that re-apply tax — the kit owns
+        # this workflow, the HOST owns scripts/repo_checks.sh, and the
+        # regen can never drop it again. Same pattern as the pytest
+        # step below: always planted, self-skips when absent, so the
+        # step self-heals the moment the host script arrives.
+        run: |
+          if [ -f scripts/repo_checks.sh ]; then
+            bash scripts/repo_checks.sh
+          else
+            echo "no scripts/repo_checks.sh — repo checkers step skipped (self-heals when it arrives)."
+          fi
+      - name: substrate gate (docs + session-log required)
+        if: steps.lane.outputs.control_only != 'true'
+        # Gate on the session cards THIS PR/push touches (CI flattens
+        # mtimes, so the engine's newest-by-mtime guess is unreliable
+        # here) — EVERY card in the diff, never a single picked one:
+        # the old `tail -1` picker graded only the last-sorted card,
+        # so a PR that ADDED an in-progress card and MODIFIED a
+        # later-sorting sibling shipped the in-progress card GREEN
+        # (the multi-card shadowing loophole, venture-lab #33 head
+        # 798a3d0 — partially reopening the superbot-games #40
+        # class). No card in the diff -> pass an explicitly named,
+        # nonexistent sentinel WITHOUT --require-session-log: per the
+        # engine's contract an explicit absent card is ADVISORY,
+        # while the bare mtime fallback latches onto the mid-session
+        # in-progress card and reds every unrelated PR (adopter
+        # live-fire, gba-homebrew PR #3, 2026-07-10 — the omitted
+        # argument was never fail-open in CI). EVERY card ADDED by
+        # the PR (first-commit conventions REQUIRE an in-progress
+        # card at birth) gates via the absent sentinel +
+        # --added-card: the engine grades each card by what it
+        # DECLARES — an in-progress/drafted card is the born-red
+        # HOLD (red until it flips complete; the superbot-games #40
+        # loophole fix, where a card-only born-red PR with
+        # auto-merge pre-armed went green and merged 24 s after
+        # open), a badge-less or complete-but-malformed card reds on
+        # grammar (the venture-lab #15 false-green class), and a
+        # complete well-formed card passes; ANY added card holding
+        # holds the whole step. Completeness is never graded
+        # mid-flight (the gba-homebrew #2 lesson — born-red is the
+        # REQUIRED state at birth); the hold is a single
+        # designed-state finding with a HOLD-by-design banner.
+        # Sibling cards MODIFIED by a diff that also adds card(s)
+        # gate through the SAME --require-session-log locked door
+        # as a modified-only diff: the added card still gates via
+        # its own --added-card lane, so a sibling verdict can only
+        # ADD red, never substitute — strictly tighter than the
+        # old advisory-only logging, which let a PR adding one
+        # good card silently break a modified sibling (review
+        # #226 finding G-1; supersedes the #187 advisory design).
+        # Session cards DELETED by the diff are a hard red —
+        # session memory is append-only; the card lists use
+        # --diff-filter=d (deletions excluded), so without this a
+        # deletion-only PR fell to the no-card advisory path and
+        # merged while erasing session memory (review #226
+        # finding G-2). A diff that ONLY modifies cards
+        # (every session close-out flips one) keeps the full
+        # locked-door gate on EACH modified card, so a close-out
+        # that forgot to flip `complete` still reds. EXCEPT: when
+        # this same PR also touches THIS gate workflow file (an
+        # upgrade PR regenerating the kit-owned gate), every ADDED
+        # card keeps the FULL locked door too — the PR runs the NEW
+        # gate the moment the regen commit lands, so without this
+        # the regen itself could loosen an added card's hold MID-PR
+        # (venture-lab #14). Hold semantics may only tighten, never
+        # loosen, inside the PR that changes them; that branch also
+        # runs --simulate-added-card so the added-card lane's
+        # would-be verdict stays observable on exactly the PRs that
+        # ship gate changes. The escape is the normal one — flip
+        # the card complete.
+        run: |
+          if [ -n "${{ github.base_ref }}" ]; then
+            range="origin/${{ github.base_ref }}...HEAD"
+          else
+            range="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          cards="$(git diff --name-only --diff-filter=d "$range" -- '.sessions/*.md' ':!.sessions/README.md' 2>/dev/null)"
+          added="$(git diff --name-only --diff-filter=A "$range" -- '.sessions/*.md' ':!.sessions/README.md' 2>/dev/null)"
+          deleted="$(git diff --name-only --diff-filter=D "$range" -- '.sessions/*.md' ':!.sessions/README.md' 2>/dev/null)"
+          gate_regen="$(git diff --name-only "$range" -- '.github/workflows/substrate-gate.yml' 2>/dev/null | tail -1)"
+          echo "session gate cards: ${cards:-<none - advisory sentinel>}"
+          fail=0
+          if [ -n "$deleted" ]; then
+            while IFS= read -r card; do
+              [ -z "$card" ] && continue
+              echo "session card DELETED by this PR (session memory is append-only — hard red): $card"
+            done <<< "$deleted"
+            fail=1
+          fi
+          if [ -n "$added" ]; then
+            while IFS= read -r card; do
+              [ -z "$card" ] && continue
+              if printf '%s\n' "$added" | grep -Fxq -- "$card"; then continue; fi
+              echo "modified sibling card (locked-door gate — same door as a modified-only diff; supersedes the #187 advisory semantics): $card"
+              python3 bootstrap.py check --strict --require-session-log --session-log "$card" || fail=1
+            done <<< "$cards"
+            while IFS= read -r card; do
+              [ -z "$card" ] && continue
+              if [ -n "$gate_regen" ]; then
+                echo "card $card is ADDED but this PR also touches the gate workflow itself — locked-door gate (mid-PR semantics may only tighten; flip the card complete to merge)"
+                python3 bootstrap.py check --strict --require-session-log --session-log "$card" --simulate-added-card "$card" || fail=1
+              else
+                echo "card $card is newly ADDED by this PR (born-red heartbeat) — added-card gate: in-progress HOLDs until the card flips complete; grammar misses red"
+                python3 bootstrap.py check --strict --session-log .sessions/__born-red-card-added__.md --added-card "$card" || fail=1
+              fi
+            done <<< "$added"
+          elif [ -n "$cards" ]; then
+            while IFS= read -r card; do
+              [ -z "$card" ] && continue
+              echo "card $card is MODIFIED by this PR (close-out flip) — locked-door gate"
+              python3 bootstrap.py check --strict --require-session-log --session-log "$card" || fail=1
+            done <<< "$cards"
+          else
+            python3 bootstrap.py check --strict --session-log .sessions/__no-card-in-diff__.md
+          fi
+          exit "$fail"
+      - name: pytest suite (a test suite ships with its CI runner; self-skips when tests/ is absent)
+        if: steps.lane.outputs.control_only != 'true'
+        # A host can live its whole life with a green gate while its
+        # tests never run in CI (superbot-games' 73 tests were
+        # invisible to gen-1 CI until games#16 hand-added a runner).
+        # Always planted, self-skips when tests/ is absent — so the
+        # gate self-heals the moment tests arrive. Full lane only:
+        # control/** heartbeat PRs never pay the test suite.
+        run: |
+          if [ ! -d tests ]; then
+            echo "no tests/ directory — pytest step skipped (self-heals when tests/ arrives)."
+            exit 0
+          fi
+          if [ -f requirements.txt ]; then
+            python3 -m pip install --quiet -r requirements.txt
+          fi
+          python3 -m pip install --quiet pytest
+          python3 -m pytest tests/ -q

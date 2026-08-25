@@ -1,0 +1,57 @@
+# MENNO CREATOR KIT — FREECAD SHAPE DIMENSIONS
+# All numbers are millimetres. Change a number, save this file, then
+# double-click "Rebuild FreeCAD Library.cmd".
+
+# Rounded storage/project box
+rounded_box_length = 60
+rounded_box_width = 40
+rounded_box_height = 25
+rounded_box_radius = 4
+
+# Open-ended tube, lying horizontally
+tube_outer_diameter = 30
+tube_inner_diameter = 22
+tube_length = 45
+
+# Flat ring / collar
+ring_outer_diameter = 50
+ring_inner_diameter = 38
+ring_height = 8
+
+# Open tray
+tray_length = 80
+tray_width = 60
+tray_height = 12
+tray_wall = 3
+tray_floor = 3
+tray_radius = 6
+
+# L-shaped bracket
+bracket_length = 50
+bracket_depth = 30
+bracket_height = 35
+bracket_thickness = 4
+
+# Raised handle
+handle_length = 70
+handle_depth = 14
+handle_grip_height = 10
+handle_rise = 25
+handle_post_width = 10
+handle_radius = 4
+
+# Pin with a wider head
+pin_diameter = 8
+pin_length = 35
+pin_head_diameter = 14
+pin_head_height = 4
+
+# Hole-size test plate
+gauge_length = 70
+gauge_width = 24
+gauge_height = 5
+gauge_radius = 3
+gauge_hole_1 = 3
+gauge_hole_2 = 4
+gauge_hole_3 = 5
+gauge_hole_4 = 6

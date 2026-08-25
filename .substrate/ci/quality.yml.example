@@ -1,0 +1,32 @@
+# Example GitHub-Actions-style quality gate for a substrate-kit host.
+# Copy into .github/workflows/, uncomment, and adjust the interpreter
+# and bootstrap path to match your repo.
+#
+# `bootstrap.py check --strict` runs every kit checker in one pass:
+# docs hygiene (badges / links / reachability), session-log markers,
+# namespace shadowing, seam authority, orientation budget, the
+# decision ledger, and the control/ status heartbeat.
+#
+# Coordination-only writes (control/** heartbeats) should skip heavy
+# suites — but if a check is REQUIRED, use an in-job short-circuit
+# (see the staged substrate-gate.yml's control lane), never
+# `paths-ignore`: a required context that never reports stays
+# pending and blocks auto-merge.
+#
+# NOTE: the INSTALLED .github/workflows/substrate-gate.yml is
+# KIT-OWNED — adopt/upgrade regenerates it in place and hand edits
+# are overwritten. Host-specific CI belongs in a separate workflow
+# (a copy of this example is a good home).
+#
+# name: substrate-quality
+# on:
+#   pull_request:
+#   push:
+#     branches: [main]
+# jobs:
+#   substrate-check:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v5
+#       - name: substrate checks
+#         run: python3 bootstrap.py check --strict

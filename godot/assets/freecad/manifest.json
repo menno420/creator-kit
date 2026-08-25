@@ -1,0 +1,142 @@
+{
+  "kit": "Menno Creator Kit",
+  "units": "metres",
+  "shapes": [
+    {
+      "id": "RoundedBox",
+      "label": "Rounded Box",
+      "category": "Container",
+      "dimensions": "60 x 40 x 25 mm",
+      "file": "rounded-box.obj",
+      "bounds_mm": [
+        60.0,
+        40.0,
+        25.0
+      ],
+      "color": [
+        0.22,
+        0.56,
+        0.91
+      ]
+    },
+    {
+      "id": "Tube",
+      "label": "Tube",
+      "category": "Connector",
+      "dimensions": "OD 30, ID 22, L 45 mm",
+      "file": "tube.obj",
+      "bounds_mm": [
+        45.0,
+        29.991,
+        30.0
+      ],
+      "color": [
+        0.18,
+        0.72,
+        0.64
+      ]
+    },
+    {
+      "id": "Ring",
+      "label": "Ring / Collar",
+      "category": "Connector",
+      "dimensions": "OD 50, ID 38, H 8 mm",
+      "file": "ring.obj",
+      "bounds_mm": [
+        50.0,
+        49.984,
+        8.0
+      ],
+      "color": [
+        0.96,
+        0.63,
+        0.22
+      ]
+    },
+    {
+      "id": "Tray",
+      "label": "Open Tray",
+      "category": "Container",
+      "dimensions": "80 x 60 x 12 mm; wall 3",
+      "file": "tray.obj",
+      "bounds_mm": [
+        80.0,
+        60.0,
+        12.0
+      ],
+      "color": [
+        0.54,
+        0.4,
+        0.82
+      ]
+    },
+    {
+      "id": "Bracket",
+      "label": "L-Bracket",
+      "category": "Support",
+      "dimensions": "50 x 30 x 35 mm; 4 thick",
+      "file": "bracket.obj",
+      "bounds_mm": [
+        50.0,
+        30.0,
+        35.0
+      ],
+      "color": [
+        0.91,
+        0.35,
+        0.38
+      ]
+    },
+    {
+      "id": "Handle",
+      "label": "Raised Handle",
+      "category": "Grip",
+      "dimensions": "70 x 14; rise 25 mm",
+      "file": "handle.obj",
+      "bounds_mm": [
+        70.0,
+        14.0,
+        35.0
+      ],
+      "color": [
+        0.3,
+        0.72,
+        0.34
+      ]
+    },
+    {
+      "id": "Pin",
+      "label": "Headed Pin",
+      "category": "Connector",
+      "dimensions": "shaft 8 x 35 mm; head 14",
+      "file": "pin.obj",
+      "bounds_mm": [
+        14.0,
+        13.996,
+        39.0
+      ],
+      "color": [
+        0.38,
+        0.45,
+        0.55
+      ]
+    },
+    {
+      "id": "HoleGauge",
+      "label": "Hole-Size Gauge",
+      "category": "Test piece",
+      "dimensions": "holes 3, 4, 5, 6 mm",
+      "file": "hole-gauge.obj",
+      "bounds_mm": [
+        70.0,
+        24.0,
+        5.0
+      ],
+      "color": [
+        0.92,
+        0.48,
+        0.72
+      ]
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "graduation": {
+    "criteria": {
+      "blocking_questions": 0,
+      "critical_slots_filled_pct": 0.8
+    },
+    "soft_target_sessions": 50
+  },
+  "graduation_proposed": false,
+  "kit_version": "1.21.0",
+  "last_compaction_session": 0,
+  "mode": "guided",
+  "mode_history": [],
+  "open_questions": [],
+  "planted_doc_hashes": {
+    ".session-journal.md": "d6d6325ec7a45baccc4b5f3164bb8e62b45d48f198a8ff9ea5bfba7aec0f7170",
+    "CONSTITUTION.md": "63d8aa25c0b45e21e934dc21f847db87fdede72f35b0ad8cf8a57a6c7c540255",
+    "control/README.md": "cdf8e0018414a43e748d911c571fd07f8f887c202aa4afa2af8cd9fb28288f48",
+    "control/claims/README.md": "38284f1a9409f89092f799f52e652dcc46b1c1f171ef9ae5579bb19032ca20d9",
+    "control/inbox.md": "f12df7c41b271a6c2a70b5ae8d6bdaa6c95089f4d7c4cfc54b4e4a122d7a6521",
+    "control/status.md": "87102e0f4c46ffe81bbdf5760de359007564b3184cfd082ccf0733a508b3ab09",
+    "docs/AGENT_ORIENTATION.md": "ad07e0db71aa0081ec38a7f6e6d72ca1c3ac20396de3df51458e3d4efd47987f",
+    "docs/CAPABILITIES.md": "f257e236388fac6643bab1dd95d915430e93d95689de6df27943b2ebde8ca928",
+    "docs/ROUTINES.md": "b3f39690cdd4177d6ba5e3caa56bf9f3ba8a4be8a6440d07d09955493a7118d4",
+    "docs/SKILLS.md": "6ad643e1b158713fc2be20e71a69900f338ec8cffa678fdfb6bca48753ea0360",
+    "docs/ai-project-workflow.md": "b344b61f58b56785ff9bc80104673ecf31326f3d28c4711a4813eb3de7eecb7a",
+    "docs/architecture.md": "71893b96f0d475b37c0dc5180af7dc3405eb55d9d06f38d1330d7a86a984183b",
+    "docs/collaboration-model.md": "df38ab6c67207689a9cdd195e6d31afedcded7404729d2c4dee4143db30419bc",
+    "docs/current-state.md": "f4813f26e3fe388fc522e8016fd0fdf63d8d074b233e30dcd03dc61ccc6425a8",
+    "docs/decisions.md": "de9f705c9851107b54414066a823083fe85972956c82f387697d5b480032022b",
+    "docs/helper-policy.md": "ba2219b09866a2c56b07a251dd740712e6ac822e85f59b06de81294f9e980650",
+    "docs/ideas/README.md": "f4123e8f29dc185273d7cc2cb78bdde98b50b9bbe3b780e7919a1cc8c286ed63",
+    "docs/owner-profile.md": "c39b98fabab780fb4eca2b0e864c1964b8e7c23488983c2174f6a3ef3bdd35a5",
+    "docs/ownership.md": "6337913a7aced5bf3267cd38f33f473b4df72cd74a6c9446eb8eb0768cdbe3ec",
+    "docs/question-router.md": "f1f64f0ad3bbe170e0cd56042ba4b1f555b5ade1bbf9b1dbe2ed8adc15df540c",
+    "docs/reading-path.md": "4ceb9c6375681102807bf8ba6ac8c393c89297ea0bfb903179677a61acdb67b1",
+    "docs/repo-navigation-map.md": "ef3eb48728315d526eb82669c3f9ba2125dccc75edb3abb23bf4127d46b91b6b",
+    "docs/runtime_contracts.md": "2aa905614707926b39ec408b189152a00a6407540ce5cc64641e1b74d6688f8b",
+    "docs/seat-digest.md": "309e6a8755370e6c7d20f5a75d6cf1a30363e1d6d02e6e3dfb1a4feb5b2e0721",
+    "scripts/env-setup.sh": "cd2145129fcba288ff9399ad44146a09017d85813e282c16bcba22340b613a2c"
+  },
+  "project_id": "c5aeda98a8ca",
+  "promotion_rights": "propose",
+  "quiet_sessions": 0,
+  "reflection_buffer": {
+    "active_count": 0,
+    "last_mined": null
+  },
+  "review_log": [],
+  "session_count": 0,
+  "slot_values": {
+    "architecture_layers": {
+      "question_id": "Q-004",
+      "source": "user",
+      "value": "Two layers, no code required to use either. (1) freecad/ - parametric source models driven by dimensions.txt, rebuilt via Rebuild FreeCAD Library.cmd, which regenerates STEP/STL exports and correctly scaled meshes. (2) godot/ - a spatial workbench that consumes those meshes. freecad is upstream of godot; exports are generated artefacts, never hand-edited."
+    },
+    "doc_roots": {
+      "question_id": "Q-007",
+      "source": "derived",
+      "value": "docs"
+    },
+    "project_name": {
+      "question_id": "Q-002",
+      "source": "derived",
+      "value": "creator-kit"
+    },
+    "verify_command": {
+      "question_id": "Q-005",
+      "source": "user",
+      "value": "Double-click \"Verify Creator Kit.cmd\" at the repo root. It runs freecad/src/verify_creator_shapes.py under freecadcmd, then imports the Godot project headless and runs scripts/verify_project.gd. Success prints CREATOR_KIT_ALL_CHECKS_OK."
+    }
+  },
+  "slots": {
+    "architecture_layers": "filled",
+    "doc_roots": "provisional",
+    "project_name": "provisional",
+    "verify_command": "filled"
+  },
+  "stage": "integration",
+  "stance": "analysis",
+  "version": 1
+}

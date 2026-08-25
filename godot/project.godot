@@ -1,0 +1,23 @@
+; Menno Creator Kit — Godot workbench
+; Generated objects use real-world scale: one Godot unit is one metre.
+
+config_version=5
+
+[application]
+
+config/name="Menno Creator Workbench"
+run/main_scene="res://scenes/workbench.tscn"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.025, 0.032, 0.047, 1)

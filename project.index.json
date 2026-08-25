@@ -1,0 +1,15 @@
+{
+  "_comment": "AgentContextPack index (design-spec 2.10). Each `areas` entry feeds one generated <state_dir>/contextpacks/<name>.context.md: `name` (the area; slugified into the pack filename), `folio` (the canonical entry-point doc for the area), `binding_docs` (authoritative contracts to read first), `source_roots` (key files/dirs; existence-checked at generation, missing ones flagged), `do_not_create` (existing systems an agent must not duplicate), `gates` (currently active expansion conditions), `verification` (commands to run before pushing). The generator also accepts a manifest snapshot ({\"subsystems\": [...]}) instead of this file.",
+  "project": "creator-kit",
+  "areas": [
+    {
+      "name": "example-area",
+      "folio": "",
+      "binding_docs": [],
+      "source_roots": [],
+      "do_not_create": [],
+      "gates": [],
+      "verification": []
+    }
+  ]
+}

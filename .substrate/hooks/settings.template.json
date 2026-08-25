@@ -1,0 +1,46 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:\\Users\\menno\\AppData\\Local\\Programs\\Python\\Python313\\python.exe bootstrap.py hook pretooluse"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:\\Users\\menno\\AppData\\Local\\Programs\\Python\\Python313\\python.exe bootstrap.py hook sessionstart"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:\\Users\\menno\\AppData\\Local\\Programs\\Python\\Python313\\python.exe bootstrap.py hook postedit"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:\\Users\\menno\\AppData\\Local\\Programs\\Python\\Python313\\python.exe bootstrap.py hook stopcheck"
+          }
+        ]
+      }
+    ]
+  }
+}

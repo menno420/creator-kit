@@ -1,0 +1,203 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/workbench.gd" id="1_script"]
+
+[sub_resource type="Environment" id="Environment_workbench"]
+background_mode = 1
+background_color = Color(0.025, 0.032, 0.047, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.64, 0.72, 0.9, 1)
+ambient_light_energy = 0.48
+reflected_light_source = 2
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Material_ground"]
+albedo_color = Color(0.09, 0.115, 0.16, 1)
+roughness = 0.88
+
+[sub_resource type="PlaneMesh" id="Plane_ground"]
+material = SubResource("Material_ground")
+size = Vector2(0.9, 0.68)
+
+[sub_resource type="StyleBoxFlat" id="Style_sidebar"]
+bg_color = Color(0.043, 0.055, 0.078, 0.97)
+border_width_right = 1
+border_color = Color(0.18, 0.25, 0.36, 1)
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+content_margin_left = 22.0
+content_margin_top = 20.0
+content_margin_right = 22.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxFlat" id="Style_info"]
+bg_color = Color(0.075, 0.095, 0.132, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+
+[node name="Workbench" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_workbench")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_color = Color(0.95, 0.97, 1, 1)
+light_energy = 1.15
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="."]
+position = Vector3(-0.28, 0.28, 0.18)
+light_color = Color(0.42, 0.65, 1, 1)
+light_energy = 2.0
+omni_range = 1.4
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.002, 0)
+mesh = SubResource("Plane_ground")
+
+[node name="GeneratedGrid" type="Node3D" parent="."]
+
+[node name="Objects" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+current = true
+fov = 48.0
+near = 0.01
+far = 20.0
+
+[node name="Interface" type="CanvasLayer" parent="."]
+
+[node name="Sidebar" type="PanelContainer" parent="Interface"]
+offset_right = 328.0
+offset_bottom = 720.0
+theme_override_styles/panel = SubResource("Style_sidebar")
+
+[node name="Content" type="VBoxContainer" parent="Interface/Sidebar"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.83, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "Creator Workbench"
+
+[node name="Subtitle" type="Label" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.69, 0.78, 1)
+theme_override_font_sizes/font_size = 14
+text = "FreeCAD shapes · real-world scale"
+
+[node name="Rule" type="HSeparator" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+
+[node name="ChooseLabel" type="Label" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Choose an object"
+
+[node name="ShapeButtons" type="GridContainer" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="SelectedPanel" type="PanelContainer" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_info")
+
+[node name="SelectedContent" type="VBoxContainer" parent="Interface/Sidebar/Content/SelectedPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SelectedLabel" type="Label" parent="Interface/Sidebar/Content/SelectedPanel/SelectedContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.38, 1)
+theme_override_font_sizes/font_size = 18
+text = "Nothing selected"
+
+[node name="DimensionsLabel" type="Label" parent="Interface/Sidebar/Content/SelectedPanel/SelectedContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.79, 0.86, 1)
+text = "Choose a shape above"
+autowrap_mode = 2
+
+[node name="ActionsLabel" type="Label" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Adjust the selected object"
+
+[node name="ActionButtons" type="GridContainer" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="MoveButton" type="Button" parent="Interface/Sidebar/Content/ActionButtons"]
+layout_mode = 2
+text = "Move  G"
+
+[node name="RotateButton" type="Button" parent="Interface/Sidebar/Content/ActionButtons"]
+layout_mode = 2
+text = "Rotate  R"
+
+[node name="BiggerButton" type="Button" parent="Interface/Sidebar/Content/ActionButtons"]
+layout_mode = 2
+text = "Bigger  +"
+
+[node name="SmallerButton" type="Button" parent="Interface/Sidebar/Content/ActionButtons"]
+layout_mode = 2
+text = "Smaller  −"
+
+[node name="ColourButton" type="Button" parent="Interface/Sidebar/Content/ActionButtons"]
+layout_mode = 2
+text = "Change colour"
+
+[node name="ResetButton" type="Button" parent="Interface/Sidebar/Content/ActionButtons"]
+layout_mode = 2
+text = "Reset all  Home"
+
+[node name="Spacer" type="Control" parent="Interface/Sidebar/Content"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HelpLabel" type="Label" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.57, 0.64, 0.75, 1)
+theme_override_font_sizes/font_size = 13
+text = "Middle-drag or Alt + left-drag: orbit\nMouse wheel: zoom\nEscape/right-click: cancel a move"
+autowrap_mode = 2
+
+[node name="Status" type="Label" parent="Interface/Sidebar/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.9, 0.67, 1)
+theme_override_font_sizes/font_size = 13
+text = "Loading reusable shapes…"
+autowrap_mode = 2
+
+[node name="ScaleBadge" type="PanelContainer" parent="Interface"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -224.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = 68.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("Style_info")
+
+[node name="Label" type="Label" parent="Interface/ScaleBadge"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.73, 0.8, 0.91, 1)
+text = "Grid: 25 mm · 1 unit = 1 metre"
+horizontal_alignment = 1
+vertical_alignment = 1
